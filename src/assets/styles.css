@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .card {
+    @apply flex gap-5 w-full border rounded-md p-5 hover:shadow-md transition duration-300;
+  }
+}
