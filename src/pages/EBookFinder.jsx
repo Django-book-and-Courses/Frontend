@@ -1,42 +1,59 @@
 import axios from "axios"
+import { useParams } from "react-router-dom"
 import { Fragment, useEffect, useState } from "react"
 
-const EBookFinder = () => {
-  const [eBooks, setEBooks] = useState([])
+// Component
+import Card from "./common/Card.jsx"
+
+const EbookFinder = () => {
+  const { eBookId } = useParams()
+  const [eBook, setEbook] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/api/v1/ebooks/")
-        setEBooks(response.data)
+        const response = await axios.get(`https://djangotestes.pythonanywhere.com/api/v1/ebooks/${+eBookId}/`)
+        setEbook(response.data)
       } catch (error) {
         console.log(error)
       }
     }
 
     fetchData()
-  }, [])
+  }, [eBookId])
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`https://djangotestes.pythonanywhere.com/api/v1/ebooks/${+eBookId}/`)
+    } catch (error) {
+      return console.log(error)
+    }
+  }
+
+  console.log(eBook.authors)
+
+  if (!eBook) {
+    return (
+      <div className="m-5 text-center">
+        <p className="text-5xl font-bold">404</p>
+        <p className="text-xl text-gray-600">Não há ebook no banco de dados.</p>
+      </div>
+    )
+  }
 
   return (
-    <Fragment>
-      <div className="container mx-auto p-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {eBooks.map((item, index) => (
-            <div key={index} className="card">
-              <img className="w-40 object-cover rounded-md" src={item.cover_photo} alt={`${item.title} cover`} />
-              <div className="w-full">
-                <p className="text-xl font-semibold">{item.title}</p>
-                <p className="text-sm text-gray-500">
-                  {item.authors[0].first_name} {item.authors[0].last_name}
-                </p>
-                <p className="my-3 text-sm text-gray-700">{item.summary}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Fragment>
+    <div className="p-5 container mx-auto">
+      <Card
+        cover_photo={eBook.cover_photo}
+        title={eBook.title}
+        authors={eBook.authors}
+        summary={eBook.summary}
+        id={eBook.id}
+        showDeleteButton={true}
+        onDelete={handleDelete}
+      />
+    </div>
   )
 }
 
-export default EBookFinder
+export default EbookFinder
