@@ -1,121 +1,135 @@
 import axios from "axios"
 import { useState } from "react"
 
-const EbookPoster = () => {
-  const [post, setPost] = useState({
+// Configuração do cliente Axios
+const apiClient = axios.create({
+  baseURL: "https://djangotestes.pythonanywhere.com/api/v1/",
+  headers: { "Content-Type": "multipart/form-data" },
+})
+
+const App = () => {
+  const [form, setForm] = useState({
     title: "",
-    first_name: "",
-    last_name: "",
     summary: "",
+    publicationDate: "",
+    numPages: 1,
+    coverPhoto: null,
   })
 
-  const handleInput = (event) => {
-    setPost({
-      ...post,
-      [event.target.name]: event.target.value,
-    })
+  const [coverPhotoPreview, setCoverPhotoPreview] = useState(null)
+
+  const handleChange = (field) => (e) => {
+    const value = field === "coverPhoto" ? e.target.files[0] : e.target.value
+    setForm((prevForm) => ({ ...prevForm, [field]: value }))
+
+    if (field === "coverPhoto") {
+      setCoverPhotoPreview(URL.createObjectURL(e.target.files[0]))
+    }
   }
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
+  const handleSubmit = (e) => {
+    e.preventDefault()
 
-    axios
-      .post("https://djangotestes.pythonanywhere.com/api/v1/ebooks/", post)
-      .then((response) => {
-        console.log(response)
-        console.log(post)
-      })
-      .catch((error) => console.log(error))
+    const formData = new FormData()
+    formData.append("title", form.title)
+    formData.append("summary", form.summary)
+    formData.append("publication_date", new Date(form.publicationDate).toISOString().split("T")[0])
+    formData.append("num_pages", form.numPages)
+    formData.append("cover_photo", form.coverPhoto)
+
+    apiClient
+      .post("ebooks/", formData)
+      .then((response) => console.log("Sucesso:", response.data))
+      .catch((error) => console.error("Erro ao enviar formulário:", error))
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="container mx-auto">
-        <div className="flex justify-center">
-          <div className="w-1/2 m-5 p-5 border-2 rounded-lg">
-            <div className="space-y-12">
-              <div className="border-b border-gray-900/10 pb-12">
-                <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                  {/* Título */}
-                  <div className="col-span-6">
-                    <label htmlFor="title" className="block text-sm font-medium leading-6 text-gray-900">
-                      Título
-                    </label>
-                    <div className="mt-2">
-                      <input
-                        name="title"
-                        type="text"
-                        value={post.title}
-                        onChange={handleInput}
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Primeiro Nome */}
-                  <div className="col-span-6">
-                    <label htmlFor="first_name" className="block text-sm font-medium leading-6 text-gray-900">
-                      Primeiro nome
-                    </label>
-                    <div className="mt-2">
-                      <input
-                        name="first_name"
-                        type="text"
-                        value={post.first_name}
-                        onChange={handleInput}
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Último Nome */}
-                  <div className="col-span-6">
-                    <label htmlFor="last_name" className="block text-sm font-medium leading-6 text-gray-900">
-                      Último nome
-                    </label>
-                    <div className="mt-2">
-                      <input
-                        name="last_name"
-                        type="text"
-                        value={post.last_name}
-                        onChange={handleInput}
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Sobre o Filme */}
-                  <div className="col-span-full">
-                    <label htmlFor="summary" className="block text-sm font-medium leading-6 text-gray-900">
-                      Sobre o filme
-                    </label>
-                    <div className="mt-2">
-                      <textarea
-                        name="summary"
-                        rows={3}
-                        value={post.summary}
-                        onChange={handleInput}
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-x-6">
-              <button
-                type="submit"
-                className="button bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:outline-indigo-600"
-              >
-                Save
-              </button>
-            </div>
+    <div className="flex justify-center items-center h-full p-5 bg-gray-100">
+      <div className="w-2/6 min-w-[300px] max-w-[600px] p-8 border-2 border-gray-300 rounded-xl bg-white shadow-md">
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit} encType="multipart/form-data">
+          <div className="flex flex-col">
+            <label htmlFor="title" className="font-bold mb-2">
+              Título:
+            </label>
+            <input
+              type="text"
+              id="title"
+              className="p-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
+              value={form.title}
+              onChange={handleChange("title")}
+              required
+            />
           </div>
-        </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="summary" className="font-bold mb-2">
+              Descrição ou Sumário:
+            </label>
+            <textarea
+              id="summary"
+              className="p-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
+              value={form.summary}
+              onChange={handleChange("summary")}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="publication_date" className="font-bold mb-2">
+              Data de Publicação:
+            </label>
+            <input
+              type="date"
+              id="publication_date"
+              className="p-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
+              value={form.publicationDate}
+              onChange={handleChange("publicationDate")}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="num_pages" className="font-bold mb-2">
+              Número de Páginas:
+            </label>
+            <input
+              type="number"
+              id="num_pages"
+              className="p-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
+              value={form.numPages}
+              onChange={handleChange("numPages")}
+              min={1}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="cover_photo" className="font-bold mb-2">
+              Foto de Capa:
+            </label>
+            <input
+              type="file"
+              id="cover_photo"
+              className="p-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
+              onChange={handleChange("coverPhoto")}
+              accept="image/*"
+            />
+          </div>
+
+          {coverPhotoPreview && (
+            <img src={coverPhotoPreview} alt="Pré-visualização da capa" className="max-w-full rounded mt-4" />
+          )}
+
+          <button
+            type="submit"
+            className="p-2 border-none bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer"
+          >
+            Criar post
+          </button>
+        </form>
       </div>
-    </form>
+    </div>
   )
 }
 
-export default EbookPoster
+export default App
